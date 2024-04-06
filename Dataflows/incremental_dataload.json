@@ -1,0 +1,133 @@
+{
+    "name": "incremental_dataload",
+    "properties": {
+        "type": "MappingDataFlow",
+        "typeProperties": {
+            "sources": [
+                {
+                    "dataset": {
+                        "referenceName": "Target_DataFlow",
+                        "type": "DatasetReference"
+                    },
+                    "name": "target"
+                },
+                {
+                    "dataset": {
+                        "referenceName": "Source_DataFlow",
+                        "type": "DatasetReference"
+                    },
+                    "name": "source"
+                }
+            ],
+            "sinks": [
+                {
+                    "dataset": {
+                        "referenceName": "Target_DataFlow",
+                        "type": "DatasetReference"
+                    },
+                    "name": "sink1"
+                }
+            ],
+            "transformations": [
+                {
+                    "name": "filter1"
+                },
+                {
+                    "name": "exists1"
+                },
+                {
+                    "name": "union1"
+                },
+                {
+                    "name": "select1"
+                }
+            ],
+            "scriptLines": [
+                "parameters{",
+                "     Watermark_Date as string,",
+                "     Save_flle_date as string (toString(currentTimestamp()))",
+                "}",
+                "source(output(",
+                "          Order_Date as date,",
+                "          Ship_Date as date,",
+                "          Ship_Mode as string,",
+                "          Postal_Code as integer,",
+                "          Region as string,",
+                "          Product_Reference as string,",
+                "          Category as string,",
+                "          Sub_Category as string,",
+                "          Sales as short,",
+                "          Quantity as short,",
+                "          Profit as double,",
+                "          State as string,",
+                "          rownumber as boolean,",
+                "          LastLoadTime as timestamp",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     ignoreNoFilesFound: false) ~> target",
+                "source(output(",
+                "          Order_Date as date,",
+                "          Ship_Date as date,",
+                "          Ship_Mode as string,",
+                "          Postal_Code as integer,",
+                "          Region as string,",
+                "          Product_Reference as string,",
+                "          Category as string,",
+                "          Sub_Category as string,",
+                "          Sales as short,",
+                "          Quantity as short,",
+                "          Profit as double,",
+                "          State as string,",
+                "          rownumber as boolean,",
+                "          LastLoadTime as timestamp",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     ignoreNoFilesFound: false) ~> source",
+                "source filter(toString(LastLoadTime)>=$Watermark_Date) ~> filter1",
+                "target, filter1 exists(target@Order_Date == source@Order_Date",
+                "     && target@Ship_Date == source@Ship_Date",
+                "     && target@Ship_Mode == source@Ship_Mode",
+                "     && target@Postal_Code == source@Postal_Code",
+                "     && target@Region == source@Region",
+                "     && target@Product_Reference == source@Product_Reference",
+                "     && target@Category == source@Category",
+                "     && target@Sub_Category == source@Sub_Category",
+                "     && target@Sales == source@Sales",
+                "     && target@Quantity == source@Quantity",
+                "     && target@Profit == source@Profit",
+                "     && target@State == source@State,",
+                "     negate:true,",
+                "     broadcast: 'auto')~> exists1",
+                "exists1, filter1 union(byName: true)~> union1",
+                "union1 select(mapColumn(",
+                "          Order_Date,",
+                "          Ship_Date,",
+                "          Ship_Mode,",
+                "          Postal_Code,",
+                "          Region,",
+                "          Product_Reference,",
+                "          Category,",
+                "          Sub_Category,",
+                "          Sales,",
+                "          Quantity,",
+                "          Profit,",
+                "          State,",
+                "          LastLoadTime",
+                "     ),",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true) ~> select1",
+                "select1 sink(allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     partitionFileNames:[(concat('New_incremental_datafile_by_dataflow',$Save_flle_date))],",
+                "     umask: 0022,",
+                "     preCommands: [],",
+                "     postCommands: [],",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true,",
+                "     partitionBy('hash', 1)) ~> sink1"
+            ]
+        }
+    }
+}

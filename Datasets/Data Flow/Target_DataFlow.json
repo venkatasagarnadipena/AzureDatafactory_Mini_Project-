@@ -1,0 +1,30 @@
+{
+    "name": "Target_DataFlow",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "ADLS_LS",
+            "type": "LinkedServiceReference"
+        },
+        "parameters": {
+            "file_name": {
+                "type": "string",
+                "defaultValue": "New_Dataflow_file"
+            }
+        },
+        "annotations": [],
+        "type": "DelimitedText",
+        "typeProperties": {
+            "location": {
+                "type": "AzureBlobFSLocation",
+                "fileName": "New_file_Dataflow",
+                "folderPath": "Output",
+                "fileSystem": "data"
+            },
+            "columnDelimiter": ",",
+            "escapeChar": "\\",
+            "firstRowAsHeader": true,
+            "quoteChar": "\""
+        },
+        "schema": []
+    }
+}

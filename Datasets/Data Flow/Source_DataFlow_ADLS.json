@@ -1,0 +1,30 @@
+{
+    "name": "Source_DataFlow",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "ADLS_LS",
+            "type": "LinkedServiceReference"
+        },
+        "parameters": {
+            "file_name": {
+                "type": "string",
+                "defaultValue": "SalesStore"
+            }
+        },
+        "annotations": [],
+        "type": "DelimitedText",
+        "typeProperties": {
+            "location": {
+                "type": "AzureBlobFSLocation",
+                "fileName": "watermark_reference",
+                "folderPath": "Input",
+                "fileSystem": "data"
+            },
+            "columnDelimiter": ",",
+            "escapeChar": "\\",
+            "firstRowAsHeader": true,
+            "quoteChar": "\""
+        },
+        "schema": []
+    }
+}

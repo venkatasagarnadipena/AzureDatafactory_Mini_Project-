@@ -1,0 +1,16 @@
+{
+    "name": "Source_DB",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "SQL_LS",
+            "type": "LinkedServiceReference"
+        },
+        "annotations": [],
+        "type": "AzureSqlTable",
+        "schema": [],
+        "typeProperties": {
+            "schema": "SalesLT",
+            "table": "Address"
+        }
+    }
+}

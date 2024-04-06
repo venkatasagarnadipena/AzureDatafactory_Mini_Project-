@@ -1,0 +1,121 @@
+{
+    "name": "incremental_dataload_pipeline",
+    "properties": {
+        "activities": [
+            {
+                "name": "Get Metadata1",
+                "type": "GetMetadata",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "dataset": {
+                        "referenceName": "Source_DataFlow_ADLS",
+                        "type": "DatasetReference"
+                    },
+                    "fieldList": [
+                        "lastModified"
+                    ],
+                    "storeSettings": {
+                        "type": "AzureBlobFSReadSettings",
+                        "enablePartitionDiscovery": false
+                    },
+                    "formatSettings": {
+                        "type": "DelimitedTextReadSettings"
+                    }
+                }
+            },
+            {
+                "name": "Set variable1",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "Get Metadata1",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "last_load",
+                    "value": {
+                        "value": "@activity('Get Metadata1').output.lastModified",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "incremental_dataload",
+                "type": "ExecuteDataFlow",
+                "dependsOn": [
+                    {
+                        "activity": "Set variable1",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "dataflow": {
+                        "referenceName": "incremental_dataload",
+                        "type": "DataFlowReference",
+                        "parameters": {
+                            "Watermark_Date": {
+                                "value": "'@{string(replace(substring(variables('last_load'),0,19),'T',' '))}'",
+                                "type": "Expression"
+                            },
+                            "Save_flle_date": "toString(currentTimestamp())"
+                        },
+                        "datasetParameters": {
+                            "target": {
+                                "file_name": "New_Dataflow_file"
+                            },
+                            "source": {
+                                "file_name": "SalesStore"
+                            },
+                            "sink1": {
+                                "file_name": "New_Dataflow_file"
+                            },
+                            "sink2": {
+                                "file_name": "New_Dataflow_file"
+                            }
+                        }
+                    },
+                    "compute": {
+                        "coreCount": 8,
+                        "computeType": "General"
+                    },
+                    "traceLevel": "Fine"
+                }
+            }
+        ],
+        "variables": {
+            "last_load": {
+                "type": "String"
+            },
+            "xjdj": {
+                "type": "String"
+            }
+        },
+        "annotations": []
+    }
+}

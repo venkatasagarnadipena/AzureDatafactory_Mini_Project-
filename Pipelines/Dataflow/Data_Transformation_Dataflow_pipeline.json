@@ -1,0 +1,37 @@
+{
+    "name": "Data_Transformation_Dataflow_Pipeline",
+    "properties": {
+        "activities": [
+            {
+                "name": "Data_Transformation_Dataflow",
+                "type": "ExecuteDataFlow",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "dataflow": {
+                        "referenceName": "Data_Transformation_Dataflow",
+                        "type": "DataFlowReference"
+                    },
+                    "compute": {
+                        "coreCount": 8,
+                        "computeType": "General"
+                    },
+                    "traceLevel": "Coarse"
+                }
+            }
+        ],
+        "variables": {
+            "wdqd": {
+                "type": "Array"
+            }
+        },
+        "annotations": []
+    }
+}

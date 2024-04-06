@@ -1,0 +1,218 @@
+{
+    "name": "watermark_reference_and_source_file",
+    "properties": {
+        "type": "MappingDataFlow",
+        "typeProperties": {
+            "sources": [
+                {
+                    "dataset": {
+                        "referenceName": "Source_DataFlow_ADLS",
+                        "type": "DatasetReference"
+                    },
+                    "name": "source1"
+                },
+                {
+                    "dataset": {
+                        "referenceName": "Source_DataFlow_ADLS",
+                        "type": "DatasetReference"
+                    },
+                    "name": "source2"
+                }
+            ],
+            "sinks": [
+                {
+                    "dataset": {
+                        "referenceName": "Source_DataFlow",
+                        "type": "DatasetReference"
+                    },
+                    "name": "sink3"
+                },
+                {
+                    "dataset": {
+                        "referenceName": "Source_DataFlow",
+                        "type": "DatasetReference"
+                    },
+                    "name": "sink"
+                },
+                {
+                    "dataset": {
+                        "referenceName": "Target_DataFlow",
+                        "type": "DatasetReference"
+                    },
+                    "name": "sink2"
+                }
+            ],
+            "transformations": [
+                {
+                    "name": "derivedColumn"
+                },
+                {
+                    "name": "derivedColumn2"
+                },
+                {
+                    "name": "filter1"
+                },
+                {
+                    "name": "select1"
+                },
+                {
+                    "name": "filter2"
+                },
+                {
+                    "name": "derivedColumn3"
+                },
+                {
+                    "name": "union1"
+                },
+                {
+                    "name": "window1"
+                },
+                {
+                    "name": "window2"
+                },
+                {
+                    "name": "filter3"
+                },
+                {
+                    "name": "filter4"
+                },
+                {
+                    "name": "window"
+                },
+                {
+                    "name": "filter"
+                }
+            ],
+            "scriptLines": [
+                "source(output(",
+                "          Order_Date as string,",
+                "          Ship_Date as string,",
+                "          Ship_Mode as string,",
+                "          Postal_Code as string,",
+                "          Region as string,",
+                "          Product_Reference as string,",
+                "          Category as string,",
+                "          Sub_Category as string,",
+                "          Sales as string,",
+                "          Quantity as string,",
+                "          Profit as string,",
+                "          State as string",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     ignoreNoFilesFound: false) ~> source1",
+                "source(output(",
+                "          Order_Date as string,",
+                "          Ship_Date as string,",
+                "          Ship_Mode as string,",
+                "          Postal_Code as string,",
+                "          Region as string,",
+                "          Product_Reference as string,",
+                "          Category as string,",
+                "          Sub_Category as string,",
+                "          Sales as string,",
+                "          Quantity as string,",
+                "          Profit as string,",
+                "          State as string",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     ignoreNoFilesFound: false) ~> source2",
+                "filter derive(LastLoadTime = toTimestamp('2020-01-01 00:00:00.000')) ~> derivedColumn",
+                "filter4 derive(LastLoadTime = currentTimestamp()) ~> derivedColumn2",
+                "select1 filter(Ship_Mode=='Air') ~> filter1",
+                "source2 select(mapColumn(",
+                "          Order_Date,",
+                "          Ship_Date,",
+                "          Ship_Mode,",
+                "          Postal_Code,",
+                "          Region,",
+                "          Product_Reference,",
+                "          Category,",
+                "          Sub_Category,",
+                "          Sales,",
+                "          Quantity,",
+                "          Profit,",
+                "          State",
+                "     ),",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true) ~> select1",
+                "select1 filter(Ship_Mode=='Ground') ~> filter2",
+                "filter3 derive(LastLoadTime = toTimestamp('2020-01-01 00:00:00.000')) ~> derivedColumn3",
+                "derivedColumn2, derivedColumn3 union(byName: true)~> union1",
+                "filter2 window(over(Ship_Mode,",
+                "          Region,",
+                "          Product_Reference,",
+                "          Category,",
+                "          Sub_Category,",
+                "          State,",
+                "          Order_Date,",
+                "          Ship_Date,",
+                "          Postal_Code,",
+                "          Sales,",
+                "          Quantity,",
+                "          Profit),",
+                "     asc(Ship_Mode, false),",
+                "     rownumber = rowNumber()) ~> window1",
+                "filter1 window(over(Ship_Mode,",
+                "          Region,",
+                "          Product_Reference,",
+                "          Category,",
+                "          Sub_Category,",
+                "          State,",
+                "          Order_Date,",
+                "          Ship_Date,",
+                "          Postal_Code,",
+                "          Sales,",
+                "          Quantity,",
+                "          Profit),",
+                "     asc(Ship_Mode, true),",
+                "     rownumber = rowNumber()) ~> window2",
+                "window1 filter(rownumber==1) ~> filter3",
+                "window2 filter(rownumber==1) ~> filter4",
+                "source1 window(over(Ship_Mode,",
+                "          Region,",
+                "          Product_Reference,",
+                "          Category,",
+                "          Sub_Category,",
+                "          State,",
+                "          Order_Date,",
+                "          Ship_Date,",
+                "          Postal_Code,",
+                "          Sales,",
+                "          Quantity,",
+                "          Profit),",
+                "     asc(Ship_Mode, true),",
+                "     rownumber = rowNumber()) ~> window",
+                "window filter(rownumber==1) ~> filter",
+                "union1 sink(allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     partitionFileNames:['watermark_reference'],",
+                "     umask: 0022,",
+                "     preCommands: [],",
+                "     postCommands: [],",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true,",
+                "     partitionBy('hash', 1)) ~> sink3",
+                "derivedColumn sink(allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     partitionFileNames:['source_data'],",
+                "     umask: 0022,",
+                "     preCommands: [],",
+                "     postCommands: [],",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true,",
+                "     partitionBy('hash', 1)) ~> sink",
+                "derivedColumn sink(allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     partitionFileNames:[(toString('New_file_Dataflow'))],",
+                "     umask: 0022,",
+                "     preCommands: [],",
+                "     postCommands: [],",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true,",
+                "     partitionBy('hash', 1)) ~> sink2"
+            ]
+        }
+    }
+}

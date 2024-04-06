@@ -1,0 +1,244 @@
+{
+    "name": "PL_Full_Load_DB_To_ADLS_Copy",
+    "properties": {
+        "activities": [
+            {
+                "name": "Lookup3",
+                "type": "Lookup",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "dataset": {
+                        "referenceName": "Source_DB",
+                        "type": "DatasetReference"
+                    },
+                    "firstRowOnly": true
+                }
+            },
+            {
+                "name": "If Condition1",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "Lookup3",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@contains(activity('Lookup3').output,'firstRow')",
+                        "type": "Expression"
+                    },
+                    "ifFalseActivities": [
+                        {
+                            "name": "Copy data1",
+                            "type": "Copy",
+                            "dependsOn": [
+                                {
+                                    "activity": "Lookup1",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "source": {
+                                    "type": "AzureSqlSource",
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "sink": {
+                                    "type": "DelimitedTextSink",
+                                    "storeSettings": {
+                                        "type": "AzureBlobFSWriteSettings"
+                                    },
+                                    "formatSettings": {
+                                        "type": "DelimitedTextWriteSettings",
+                                        "quoteAllText": true,
+                                        "fileExtension": ".txt"
+                                    }
+                                },
+                                "enableStaging": false,
+                                "translator": {
+                                    "type": "TabularTranslator",
+                                    "typeConversion": true,
+                                    "typeConversionSettings": {
+                                        "allowDataTruncation": true,
+                                        "treatBooleanAsNumber": false
+                                    }
+                                }
+                            },
+                            "inputs": [
+                                {
+                                    "referenceName": "Source_DB",
+                                    "type": "DatasetReference"
+                                }
+                            ],
+                            "outputs": [
+                                {
+                                    "referenceName": "Target_ADLS",
+                                    "type": "DatasetReference",
+                                    "parameters": {
+                                        "file_name": {
+                                            "value": "@concat('New_file_',activity('Lookup1').output.firstRow.Date)",
+                                            "type": "Expression"
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Lookup1",
+                            "type": "Lookup",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "source": {
+                                    "type": "AzureSqlSource",
+                                    "sqlReaderQuery": {
+                                        "value": "Select getdate() as Date",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "dataset": {
+                                    "referenceName": "Source_DB",
+                                    "type": "DatasetReference"
+                                }
+                            }
+                        }
+                    ],
+                    "ifTrueActivities": [
+                        {
+                            "name": "Copy data2",
+                            "type": "Copy",
+                            "dependsOn": [
+                                {
+                                    "activity": "Lookup2",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "source": {
+                                    "type": "AzureSqlSource",
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "sink": {
+                                    "type": "DelimitedTextSink",
+                                    "storeSettings": {
+                                        "type": "AzureBlobFSWriteSettings"
+                                    },
+                                    "formatSettings": {
+                                        "type": "DelimitedTextWriteSettings",
+                                        "quoteAllText": true,
+                                        "fileExtension": ".txt"
+                                    }
+                                },
+                                "enableStaging": false,
+                                "translator": {
+                                    "type": "TabularTranslator",
+                                    "typeConversion": true,
+                                    "typeConversionSettings": {
+                                        "allowDataTruncation": true,
+                                        "treatBooleanAsNumber": false
+                                    }
+                                }
+                            },
+                            "inputs": [
+                                {
+                                    "referenceName": "Source_DB",
+                                    "type": "DatasetReference"
+                                }
+                            ],
+                            "outputs": [
+                                {
+                                    "referenceName": "Target_ADLS",
+                                    "type": "DatasetReference",
+                                    "parameters": {
+                                        "file_name": {
+                                            "value": "@concat('New_file_',activity('Lookup2').output.firstRow.Date)",
+                                            "type": "Expression"
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Lookup2",
+                            "type": "Lookup",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "source": {
+                                    "type": "AzureSqlSource",
+                                    "sqlReaderQuery": {
+                                        "value": "Select getdate() as Date",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "dataset": {
+                                    "referenceName": "Source_DB",
+                                    "type": "DatasetReference"
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "annotations": [],
+        "lastPublishTime": "2024-03-11T11:45:47Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}

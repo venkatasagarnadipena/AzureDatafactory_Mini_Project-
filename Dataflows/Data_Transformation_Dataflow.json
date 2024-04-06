@@ -1,0 +1,170 @@
+{
+    "name": "Data_Transformation_Dataflow",
+    "properties": {
+        "type": "MappingDataFlow",
+        "typeProperties": {
+            "sources": [
+                {
+                    "dataset": {
+                        "referenceName": "Source_DataFlow",
+                        "type": "DatasetReference"
+                    },
+                    "name": "source"
+                }
+            ],
+            "sinks": [
+                {
+                    "dataset": {
+                        "referenceName": "Target_DataFlow",
+                        "type": "DatasetReference"
+                    },
+                    "name": "sink1"
+                }
+            ],
+            "transformations": [
+                {
+                    "name": "derivedColumn1"
+                },
+                {
+                    "name": "split1"
+                },
+                {
+                    "name": "union1"
+                },
+                {
+                    "name": "rank1"
+                },
+                {
+                    "name": "derivedColumn2"
+                },
+                {
+                    "name": "lookup1"
+                },
+                {
+                    "name": "window1"
+                },
+                {
+                    "name": "filter1"
+                },
+                {
+                    "name": "select1"
+                },
+                {
+                    "name": "select2"
+                }
+            ],
+            "scriptLines": [
+                "parameters{",
+                "     Load_Date as string (toString(currentTimestamp()))",
+                "}",
+                "source(output(",
+                "          Order_Date as date,",
+                "          Ship_Date as date,",
+                "          Ship_Mode as string,",
+                "          Postal_Code as integer,",
+                "          Region as string,",
+                "          Product_Reference as string,",
+                "          Category as string,",
+                "          Sub_Category as string,",
+                "          Sales as short,",
+                "          Quantity as short,",
+                "          Profit as double,",
+                "          State as string",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     ignoreNoFilesFound: false,",
+                "     partitionBy('hash', 1)) ~> source",
+                "source derive(Order_Month = month(Order_Date),",
+                "          Shipping_Duration = dayOfYear(Ship_Date)-dayOfYear(Order_Date),",
+                "          Sales_Per_Quantity = round(Sales/Quantity,8,2),",
+                "          Profit_Margin = round(((Profit/Sales)*100),8,2),",
+                "          Year_from_Order_Date = year(Order_Date)) ~> derivedColumn1",
+                "select1 split(equals(Ship_Mode,'Ground'),",
+                "     disjoint: false) ~> split1@(Land, Air)",
+                "split1@Land, split1@Air union(byName: true)~> union1",
+                "union1 rank(desc(Profit_Margin, true),",
+                "     output(Rank_Of_Orders as long),",
+                "     dense: true) ~> rank1",
+                "rank1 derive(Load_Time = currentUTC()) ~> derivedColumn2",
+                "derivedColumn2, source lookup(union1@Ship_Mode == source@Ship_Mode,",
+                "     multiple: false,",
+                "     pickup: 'any',",
+                "     broadcast: 'auto')~> lookup1",
+                "derivedColumn1 window(over(Ship_Mode,",
+                "          Region,",
+                "          Product_Reference,",
+                "          Category,",
+                "          Sub_Category,",
+                "          State,",
+                "          Order_Date,",
+                "          Ship_Date,",
+                "          Postal_Code,",
+                "          Sales,",
+                "          Quantity,",
+                "          Profit,",
+                "          Order_Month,",
+                "          Shipping_Duration,",
+                "          Sales_Per_Quantity,",
+                "          Profit_Margin,",
+                "          Year_from_Order_Date),",
+                "     asc(Ship_Mode, true),",
+                "     Rownumber = rowNumber()) ~> window1",
+                "window1 filter(Rownumber==1) ~> filter1",
+                "filter1 select(mapColumn(",
+                "          Order_Date,",
+                "          Ship_Date,",
+                "          Ship_Mode,",
+                "          Postal_Code,",
+                "          Region,",
+                "          Product_Reference,",
+                "          Category,",
+                "          Sub_Category,",
+                "          Sales,",
+                "          Quantity,",
+                "          Profit,",
+                "          State,",
+                "          Order_Month,",
+                "          Shipping_Duration,",
+                "          Sales_Per_Quantity,",
+                "          Profit_Margin,",
+                "          Year_from_Order_Date",
+                "     ),",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true) ~> select1",
+                "lookup1 select(mapColumn(",
+                "          Order_Date = union1@Order_Date,",
+                "          Ship_Date = union1@Ship_Date,",
+                "          Ship_Mode = union1@Ship_Mode,",
+                "          Postal_Code = union1@Postal_Code,",
+                "          Region = union1@Region,",
+                "          Product_Reference = union1@Product_Reference,",
+                "          Category = union1@Category,",
+                "          Sub_Category = union1@Sub_Category,",
+                "          Sales = union1@Sales,",
+                "          Quantity = union1@Quantity,",
+                "          Profit = union1@Profit,",
+                "          State = union1@State,",
+                "          Order_Month,",
+                "          Shipping_Duration,",
+                "          Sales_Per_Quantity,",
+                "          Profit_Margin,",
+                "          Year_from_Order_Date,",
+                "          Rank_Of_Orders,",
+                "          Load_Time",
+                "     ),",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true) ~> select2",
+                "select2 sink(allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     partitionFileNames:[(concat('New_file_by_Dataflow',$Load_Date))],",
+                "     umask: 0022,",
+                "     preCommands: [],",
+                "     postCommands: [],",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true,",
+                "     partitionBy('hash', 1)) ~> sink1"
+            ]
+        }
+    }
+}

@@ -1,0 +1,43 @@
+{
+    "name": "watermark_reference_and_source_file_pipeline",
+    "properties": {
+        "activities": [
+            {
+                "name": "watermark_reference_and_source_file",
+                "type": "ExecuteDataFlow",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "dataflow": {
+                        "referenceName": "watermark_reference_and_source_file",
+                        "type": "DataFlowReference",
+                        "datasetParameters": {
+                            "sink3": {
+                                "file_name": "SalesStore"
+                            },
+                            "sink": {
+                                "file_name": "SalesStore"
+                            },
+                            "sink2": {
+                                "file_name": "New_Dataflow_file"
+                            }
+                        }
+                    },
+                    "compute": {
+                        "coreCount": 8,
+                        "computeType": "General"
+                    },
+                    "traceLevel": "Fine"
+                }
+            }
+        ],
+        "annotations": []
+    }
+}
